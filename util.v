@@ -1,5 +1,21 @@
 module main
 
+fn dbg(msg string) {
+	eprint('[qpt] ${msg}\n')
+}
+
+fn hex_str(data []u8) string {
+	if data.len == 0 {
+		return '(empty)'
+	}
+	mut s := []u8{cap: data.len * 2}
+	for b in data {
+		s << hex_char(b >> 4)
+		s << hex_char(b & 0x0f)
+	}
+	return s.bytestr()
+}
+
 fn format_bytes(bytes u64) string {
 	if bytes < 1024 {
 		return '${bytes} B'

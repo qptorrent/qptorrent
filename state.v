@@ -40,14 +40,15 @@ struct FileInfo {
 }
 
 struct TorrentMetainfo {
-	announce     string
-	name         string
-	piece_length int
-	pieces       []u8 // concatenated 20-byte SHA1 hashes
-	files        []FileInfo
-	total_length u64
-	info_hash    []u8 // 20 bytes
-	is_video     bool
+	announce      string
+	announce_list []string // backup trackers from announce-list
+	name          string
+	piece_length  int
+	pieces        []u8 // concatenated 20-byte SHA1 hashes
+	files         []FileInfo
+	total_length  u64
+	info_hash     []u8 // 20 bytes
+	is_video      bool
 }
 
 fn (m &TorrentMetainfo) num_pieces() int {
@@ -173,6 +174,7 @@ mut:
 	peer_id        []u8
 	window         &gui.Window = unsafe { nil }
 	last_tick      time.Time   = time.now()
+	pending_paths  []string // torrent files to load on init (from CLI args)
 }
 
 fn new_app() &App {

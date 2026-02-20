@@ -123,23 +123,53 @@ fn (mut d BencodeDecoder) decode_dict() !map[string]BencodeValue {
 	return dict
 }
 
-// Extract raw bytes of the info dictionary for SHA1 hashing
+// Extract raw bytes of the info dictionary for SHA1 hashing.
+// Walks the root dict properly to find the info key at a valid position.
 fn extract_raw_info(data []u8) ![]u8 {
-	// Find "4:info" followed by a dict 'd'
-	for i := 0; i < data.len - 6; i++ {
-		if data[i] == `4` && data[i + 1] == `:` && data[i + 2] == `i` && data[i + 3] == `n`
-			&& data[i + 4] == `f` && data[i + 5] == `o` {
-			start := i + 6
-			if start >= data.len || data[start] != `d` {
-				continue
-			}
-			// Parse through the dict to find its end
-			end := find_bencode_end(data, start)!
-			return data[start..end]
+	if data.len == 0 || data[0] != `d` {
+		return BencodeError{
+			msg: 'not a dict at root'
+			pos: 0
 		}
 	}
+	mut pos := 1 // skip root 'd'
+	for pos < data.len && data[pos] != `e` {
+		// Read key (must be a string)
+		key_start := pos
+		if pos >= data.len || data[pos] < `0` || data[pos] > `9` {
+			return BencodeError{
+				msg: 'expected string key in root dict'
+				pos: pos
+			}
+		}
+		// Parse string length
+		mut len_end := pos
+		for len_end < data.len && data[len_end] != `:` {
+			len_end++
+		}
+		if len_end >= data.len {
+			return BencodeError{
+				msg: 'unterminated key length'
+				pos: key_start
+			}
+		}
+		key_len := data[pos..len_end].bytestr().int()
+		key_data_start := len_end + 1
+		key_str := data[key_data_start..key_data_start + key_len].bytestr()
+		pos = key_data_start + key_len
+
+		// Now pos points to the value
+		value_start := pos
+		if key_str == 'info' {
+			end := find_bencode_end(data, value_start)!
+			return data[value_start..end]
+		}
+
+		// Skip over value
+		pos = find_bencode_end(data, pos)!
+	}
 	return BencodeError{
-		msg: 'info dictionary not found'
+		msg: 'info dictionary not found in root dict'
 		pos: 0
 	}
 }

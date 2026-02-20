@@ -160,7 +160,9 @@ fn status_bar_view(window &gui.Window) gui.View {
 }
 
 fn add_torrent_file(path string, mut w gui.Window) {
+	dbg('add_torrent_file: ${path}')
 	meta := parse_torrent_file(path) or {
+		dbg('ERROR parsing torrent: ${err.msg()}')
 		mut app := w.state[App]()
 		app.status_message = 'Error: ${err.msg()}'
 		return
@@ -175,6 +177,8 @@ fn add_torrent_file(path string, mut w gui.Window) {
 	for i in 0 .. num_pieces {
 		pieces << new_piece_info(meta.piece_size(i))
 	}
+
+	dbg('Added torrent: "${meta.name}" (${num_pieces} pieces, ${format_bytes(meta.total_length)})')
 
 	torrent := &Torrent{
 		meta:         meta

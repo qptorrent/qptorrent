@@ -5,8 +5,25 @@ import os
 import time
 
 fn main() {
+	mut app := new_app()
+
+	// Parse CLI arguments for .torrent files
+	for i in 1 .. os.args.len {
+		arg := os.args[i]
+		if arg.ends_with('.torrent') {
+			if os.exists(arg) {
+				app.pending_paths << os.real_path(arg)
+				dbg('CLI arg: queued "${arg}"')
+			} else {
+				dbg('CLI arg: file not found "${arg}"')
+			}
+		} else {
+			dbg('CLI arg: ignoring "${arg}" (not a .torrent)')
+		}
+	}
+
 	mut window := gui.window(
-		state:    new_app()
+		state:    app
 		title:    'QPTorrent'
 		width:    1000
 		height:   600
@@ -24,6 +41,14 @@ fn on_init(mut w gui.Window) {
 	// Ensure download directory exists
 	if !os.exists(app.download_dir) {
 		os.mkdir_all(app.download_dir) or {}
+	}
+
+	// Load any torrents from CLI arguments
+	paths := app.pending_paths.clone()
+	app.pending_paths = []string{}
+	for path in paths {
+		dbg('Loading torrent from CLI: ${path}')
+		add_torrent_file(path, mut w)
 	}
 
 	// Start periodic speed update timer in background
@@ -46,6 +71,7 @@ fn on_event(e &gui.Event, mut w gui.Window) {
 		paths := w.get_dropped_file_paths()
 		for path in paths {
 			if path.ends_with('.torrent') {
+				dbg('Dropped torrent file: ${path}')
 				add_torrent_file(path, mut w)
 			}
 		}
