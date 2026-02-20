@@ -24,7 +24,11 @@ struct BlockResult {
 }
 
 fn cli_download(torrent_path string) {
-	meta := parse_torrent_file(torrent_path) or {
+	torrent_data := os.read_bytes(torrent_path) or {
+		eprintln('Error reading file: ${err.msg()}')
+		return
+	}
+	meta := parse_torrent_data(torrent_data) or {
 		eprintln('Error: ${err.msg()}')
 		return
 	}
@@ -39,6 +43,14 @@ fn cli_download(torrent_path string) {
 		eprintln('Error allocating files: ${err.msg()}')
 		return
 	}
+
+	// Save to DB so GUI can pick it up
+	cli_torrent := &Torrent{
+		meta:         meta
+		state:        .downloading
+		download_dir: download_dir
+	}
+	db_save_torrent(cli_torrent, torrent_data)
 
 	num_pieces := meta.num_pieces()
 	mut pieces := []PieceInfo{cap: num_pieces}
@@ -164,8 +176,10 @@ fn cli_download(torrent_path string) {
 	// Clear progress line and print result
 	eprint('\r' + ' '.repeat(80) + '\r')
 	if state.completed == num_pieces {
+		db_update_state(meta.info_hash, .seeding)
 		eprintln('Download complete: ${os.join_path(download_dir, meta.name)}')
 	} else {
+		db_update_state(meta.info_hash, .paused)
 		eprintln('Download stopped (${state.completed}/${num_pieces} pieces, all peers disconnected)')
 	}
 }
