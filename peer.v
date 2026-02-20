@@ -360,6 +360,16 @@ fn handle_block(torrent_index int, piece_idx int, block_offset int, data []u8, m
 			return
 		}
 
+		// Skip if piece already complete (duplicate from another peer)
+		if torrent.pieces[piece_idx].state == .complete {
+			return
+		}
+
+		// Skip if block already received (duplicate from another peer)
+		if block_idx < torrent.pieces[piece_idx].blocks.len && torrent.pieces[piece_idx].blocks[block_idx] {
+			return
+		}
+
 		// Write block to disk
 		write_block(&torrent.meta, torrent.download_dir, piece_idx, block_offset, data_clone) or {
 			dbg('  ERROR writing block: piece=${piece_idx} offset=${block_offset}: ${err.msg()}')
