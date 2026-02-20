@@ -5,22 +5,29 @@ import os
 import time
 
 fn main() {
-	mut app := new_app()
-
-	// Parse CLI arguments for .torrent files
+	// Check for .torrent files on command line → CLI mode
+	mut torrent_paths := []string{}
 	for i in 1 .. os.args.len {
 		arg := os.args[i]
 		if arg.ends_with('.torrent') {
 			if os.exists(arg) {
-				app.pending_paths << os.real_path(arg)
-				dbg('CLI arg: queued "${arg}"')
+				torrent_paths << os.real_path(arg)
 			} else {
-				dbg('CLI arg: file not found "${arg}"')
+				eprintln('File not found: ${arg}')
 			}
-		} else {
-			dbg('CLI arg: ignoring "${arg}" (not a .torrent)')
 		}
 	}
+
+	if torrent_paths.len > 0 {
+		// CLI mode: download without GUI
+		for path in torrent_paths {
+			cli_download(path)
+		}
+		return
+	}
+
+	// GUI mode
+	mut app := new_app()
 
 	mut window := gui.window(
 		state:    app

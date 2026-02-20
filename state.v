@@ -173,8 +173,10 @@ mut:
 	total_up       u64
 	peer_id        []u8
 	window         &gui.Window = unsafe { nil }
-	last_tick      time.Time   = time.now()
-	pending_paths  []string // torrent files to load on init (from CLI args)
+	last_tick          time.Time   = time.now()
+	pending_paths      []string // torrent files to load on init (from CLI args)
+	last_click_row     int = -1
+	last_click_frame   u64
 }
 
 fn new_app() &App {

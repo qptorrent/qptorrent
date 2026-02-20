@@ -97,7 +97,7 @@ fn torrent_table_view(mut window gui.Window) gui.View {
 		gui.th('Status'),
 	])
 
-	for t in app.torrents {
+	for i, t in app.torrents {
 		progress := t.progress()
 		progress_pct := '${progress * 100.0:.1f}%'
 		speed_str := format_speed(t.download_speed)
@@ -108,23 +108,42 @@ fn torrent_table_view(mut window gui.Window) gui.View {
 		} else {
 			t.state.str()
 		}
+		row_idx := i
 
-		rows << gui.tr([
-			gui.td(t.meta.name),
-			gui.td(size_str),
-			gui.TableCellCfg{
-				content: gui.progress_bar(
-					height:  16
-					sizing:  gui.fill_fixed
-					percent: f32(progress)
-					text:    progress_pct
-				)
-			},
-			gui.td(speed_str),
-			gui.td(eta_str),
-			gui.td('${t.seeds}'),
-			gui.td(status_str),
-		])
+		rows << gui.TableRowCfg{
+			on_click: fn [row_idx] (_ &gui.Layout, mut e gui.Event, mut w gui.Window) {
+				mut a := w.state[App]()
+				if a.last_click_row == row_idx
+					&& a.last_click_frame > 0
+					&& e.frame_count - a.last_click_frame <= 24 {
+					// Double click - open in file manager
+					if row_idx < a.torrents.len {
+						open_in_file_manager(a.torrents[row_idx].download_dir)
+					}
+					a.last_click_row = -1
+					a.last_click_frame = 0
+				} else {
+					a.last_click_row = row_idx
+					a.last_click_frame = e.frame_count
+				}
+			}
+			cells: [
+				gui.td(t.meta.name),
+				gui.td(size_str),
+				gui.TableCellCfg{
+					content: gui.progress_bar(
+						height:  16
+						sizing:  gui.fill_fixed
+						percent: f32(progress)
+						text:    progress_pct
+					)
+				},
+				gui.td(speed_str),
+				gui.td(eta_str),
+				gui.td('${t.seeds}'),
+				gui.td(status_str),
+			]
+		}
 	}
 
 	return window.table(
@@ -210,6 +229,16 @@ fn toggle_selected(mut w gui.Window) {
 				else {}
 			}
 		}
+	}
+}
+
+fn open_in_file_manager(path string) {
+	$if macos {
+		os.execute('open "${path}"')
+	} $else $if windows {
+		os.execute('explorer "${path}"')
+	} $else {
+		os.execute('xdg-open "${path}"')
 	}
 }
 
