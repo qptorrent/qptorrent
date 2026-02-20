@@ -4,6 +4,10 @@ import gui
 import os
 
 fn main_view(mut window gui.Window) gui.View {
+	app := window.state[App]()
+	if app.show_settings {
+		return settings_view(mut window)
+	}
 	w, h := window.window_size()
 	return gui.column(
 		width:   w
@@ -70,6 +74,7 @@ fn toolbar_view(window &gui.Window) gui.View {
 				disabled: !has_selection
 				on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
 					toggle_selected(mut w)
+					w.update_view(main_view)
 				}
 			),
 			gui.button(
@@ -77,6 +82,16 @@ fn toolbar_view(window &gui.Window) gui.View {
 				disabled: !has_selection
 				on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
 					remove_selected(mut w)
+					w.update_view(main_view)
+				}
+			),
+			gui.column(sizing: gui.fill_fit),
+			gui.button(
+				content:  [gui.text(text: 'Settings')]
+				on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
+					mut a := w.state[App]()
+					a.show_settings = true
+					w.update_view(main_view)
 				}
 			),
 		]
@@ -93,6 +108,7 @@ fn torrent_table_view(mut window gui.Window) gui.View {
 		gui.th('Progress'),
 		gui.th('Down Speed'),
 		gui.th('ETA'),
+		gui.th('Peers'),
 		gui.th('Seeds'),
 		gui.th('Status'),
 	])
@@ -103,6 +119,7 @@ fn torrent_table_view(mut window gui.Window) gui.View {
 		speed_str := format_speed(t.download_speed)
 		eta_str := format_eta(t.remaining(), t.download_speed)
 		size_str := format_bytes(t.meta.total_length)
+		peers_str := '${t.peers.len}'
 		status_str := if t.state == .error {
 			'Error: ${t.error_message}'
 		} else {
@@ -140,6 +157,7 @@ fn torrent_table_view(mut window gui.Window) gui.View {
 				},
 				gui.td(speed_str),
 				gui.td(eta_str),
+				gui.td(peers_str),
 				gui.td('${t.seeds}'),
 				gui.td(status_str),
 			]
@@ -156,6 +174,7 @@ fn torrent_table_view(mut window gui.Window) gui.View {
 		on_select:       fn (selected map[int]bool, _ int, mut _ gui.Event, mut w gui.Window) {
 			mut a := w.state[App]()
 			a.selected = selected.clone()
+			w.update_view(main_view)
 		}
 		data:            rows
 	)
@@ -174,6 +193,163 @@ fn status_bar_view(window &gui.Window) gui.View {
 			gui.text(text: '${count_str}  |  ${app.status_message}', text_style: gui.theme().n4),
 			gui.column(sizing: gui.fill_fit),
 			gui.text(text: speed_str, text_style: gui.theme().n4),
+		]
+	)
+}
+
+// --- Settings view ---
+
+fn settings_view(mut window gui.Window) gui.View {
+	app := window.state[App]()
+	w, h := window.window_size()
+
+	return gui.column(
+		width:   w
+		height:  h
+		sizing:  gui.fixed_fixed
+		padding: gui.padding_none
+		content: [
+			// Header
+			gui.row(
+				sizing:  gui.fill_fit
+				padding: gui.padding_medium
+				spacing: 10
+				content: [
+					gui.text(text: 'Settings', text_style: gui.theme().b2),
+					gui.column(sizing: gui.fill_fit),
+					gui.button(
+						content:  [gui.text(text: 'Back')]
+						on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
+							mut a := w.state[App]()
+							a.show_settings = false
+							db_save_settings(a)
+							w.update_view(main_view)
+						}
+					),
+				]
+			),
+			// Settings body
+			gui.column(
+				sizing:  gui.fill_fill
+				padding: gui.Padding{
+					left:   40
+					right:  40
+					top:    20
+					bottom: 20
+				}
+				spacing: 20
+				content: [
+					// Download directory
+					gui.column(
+						sizing:  gui.fill_fit
+						spacing: 6
+						content: [
+							gui.text(text: 'Download Directory', text_style: gui.theme().b3),
+							gui.row(
+								sizing:  gui.fill_fit
+								spacing: 8
+								content: [
+									gui.input(
+										id:       'settings_download_dir'
+										id_focus: 10
+										text:     app.download_dir
+										sizing:   gui.fill_fit
+										on_text_commit: fn (_ &gui.Layout, s string, _ gui.InputCommitReason, mut w gui.Window) {
+											mut a := w.state[App]()
+											a.download_dir = s
+										}
+									),
+									gui.button(
+										content:  [gui.text(text: 'Browse')]
+										on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
+											a := w.state[App]()
+											w.native_folder_dialog(
+												title:     'Select Download Directory'
+												start_dir: a.download_dir
+												on_done:   fn (result gui.NativeDialogResult, mut w gui.Window) {
+													if result.status == .ok && result.paths.len > 0 {
+														mut a := w.state[App]()
+														a.download_dir = result.paths[0]
+														w.update_view(main_view)
+													}
+												}
+											)
+										}
+									),
+								]
+							),
+						]
+					),
+					// Dark mode
+					gui.row(
+						sizing:  gui.fill_fit
+						spacing: 10
+						content: [
+							gui.switch(
+								id:       'settings_dark_mode'
+								id_focus: 11
+								label:    'Dark Mode'
+								select:   app.dark_mode
+								on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
+									mut a := w.state[App]()
+									a.dark_mode = !a.dark_mode
+									if a.dark_mode {
+										w.set_theme(gui.theme_dark_bordered)
+									} else {
+										w.set_theme(gui.theme_light_bordered)
+									}
+									w.update_view(main_view)
+								}
+							),
+						]
+					),
+					// Sequential download
+					gui.row(
+						sizing:  gui.fill_fit
+						spacing: 10
+						content: [
+							gui.switch(
+								id:       'settings_sequential'
+								id_focus: 12
+								label:    'Sequential Download'
+								select:   app.sequential
+								on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
+									mut a := w.state[App]()
+									a.sequential = !a.sequential
+									w.update_view(main_view)
+								}
+							),
+						]
+					),
+					// Speed limit
+					gui.column(
+						sizing:  gui.fill_fit
+						spacing: 6
+						content: [
+							gui.text(text: 'Download Speed Limit (KB/s, 0 = unlimited)', text_style: gui.theme().b3),
+							gui.numeric_input(
+								id:       'settings_speed_limit'
+								id_focus: 13
+								value:    f64(app.speed_limit_kb)
+								min:      0
+								max:      1000000
+								step_cfg: gui.NumericStepCfg{
+									step:         100
+									mouse_wheel:  true
+									keyboard:     true
+									show_buttons: true
+								}
+								decimals: 0
+								sizing:   gui.fill_fit
+								on_value_commit: fn (_ &gui.Layout, val ?f64, _ string, mut w gui.Window) {
+									mut a := w.state[App]()
+									a.speed_limit_kb = int(val or { 0.0 })
+								}
+							),
+						]
+					),
+				]
+			),
 		]
 	)
 }

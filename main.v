@@ -47,6 +47,14 @@ fn on_init(mut w gui.Window) {
 	mut app := w.state[App]()
 	app.window = w
 
+	// Load settings from DB
+	db_load_settings(mut app)
+	if app.dark_mode {
+		w.set_theme(gui.theme_dark_bordered)
+	} else {
+		w.set_theme(gui.theme_light_bordered)
+	}
+
 	// Ensure download directory exists
 	if !os.exists(app.download_dir) {
 		os.mkdir_all(app.download_dir) or {}

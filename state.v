@@ -165,18 +165,23 @@ fn (t &Torrent) completed_pieces() int {
 @[heap]
 struct App {
 mut:
-	torrents       []&Torrent
-	selected       map[int]bool
-	download_dir   string
-	status_message string
-	total_down     u64
-	total_up       u64
-	peer_id        []u8
-	window         &gui.Window = unsafe { nil }
+	torrents           []&Torrent
+	selected           map[int]bool
+	download_dir       string
+	status_message     string
+	total_down         u64
+	total_up           u64
+	peer_id            []u8
+	window             &gui.Window = unsafe { nil }
 	last_tick          time.Time   = time.now()
 	pending_paths      []string // torrent files to load on init (from CLI args)
 	last_click_row     int = -1
 	last_click_frame   u64
+	// Settings
+	show_settings      bool
+	dark_mode          bool = true
+	sequential         bool = true
+	speed_limit_kb     int  // 0 = unlimited
 }
 
 fn new_app() &App {

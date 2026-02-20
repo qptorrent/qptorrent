@@ -12,6 +12,15 @@ struct TorrentRow {
 	state         int    // TorrentState as int
 }
 
+@[table: 'settings']
+struct SettingsRow {
+	id             int    @[primary; sql: serial]
+	download_dir   string
+	dark_mode      int
+	sequential     int
+	speed_limit_kb int
+}
+
 fn open_db() !sqlite.DB {
 	dir := os.join_path(os.home_dir(), '.qptorrent')
 	if !os.exists(dir) {
@@ -21,6 +30,9 @@ fn open_db() !sqlite.DB {
 	mut db := sqlite.connect(db_path)!
 	sql db {
 		create table TorrentRow
+	}!
+	sql db {
+		create table SettingsRow
 	}!
 	return db
 }
@@ -181,4 +193,53 @@ fn hex_nibble(c u8) u8 {
 		return c - `a` + 10
 	}
 	return 0
+}
+
+fn db_load_settings(mut app App) {
+	mut db := open_db() or {
+		dbg('db_load_settings: ${err.msg()}')
+		return
+	}
+	defer {
+		db.close() or {}
+	}
+	rows := sql db {
+		select from SettingsRow limit 1
+	} or { return }
+	if rows.len > 0 {
+		s := rows[0]
+		app.download_dir = s.download_dir
+		app.dark_mode = s.dark_mode != 0
+		app.sequential = s.sequential != 0
+		app.speed_limit_kb = s.speed_limit_kb
+	}
+}
+
+fn db_save_settings(app &App) {
+	mut db := open_db() or {
+		dbg('db_save_settings: ${err.msg()}')
+		return
+	}
+	defer {
+		db.close() or {}
+	}
+	// Delete all existing settings
+	sql db {
+		delete from SettingsRow where id > 0
+	} or {}
+	// Also delete id=0 row
+	sql db {
+		delete from SettingsRow where id == 0
+	} or {}
+	row := SettingsRow{
+		download_dir:   app.download_dir
+		dark_mode:      if app.dark_mode { 1 } else { 0 }
+		sequential:     if app.sequential { 1 } else { 0 }
+		speed_limit_kb: app.speed_limit_kb
+	}
+	sql db {
+		insert row into SettingsRow
+	} or {
+		dbg('db_save_settings: insert failed: ${err.msg()}')
+	}
 }
