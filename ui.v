@@ -158,7 +158,7 @@ fn torrent_table_view(mut window gui.Window) gui.View {
 				gui.td(speed_str),
 				gui.td(eta_str),
 				gui.td(peers_str),
-				gui.td('${t.seeds}'),
+				gui.td('${t.connected_seeds()}'),
 				gui.td(status_str),
 			]
 		}

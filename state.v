@@ -162,6 +162,29 @@ fn (t &Torrent) completed_pieces() int {
 	return count
 }
 
+fn (t &Torrent) connected_seeds() int {
+	num_pieces := t.meta.num_pieces()
+	if num_pieces == 0 {
+		return 0
+	}
+	mut count := 0
+	for p in t.peers {
+		if p.bitfield.len >= num_pieces {
+			mut has_all := true
+			for i in 0 .. num_pieces {
+				if !p.bitfield[i] {
+					has_all = false
+					break
+				}
+			}
+			if has_all {
+				count++
+			}
+		}
+	}
+	return count
+}
+
 @[heap]
 struct App {
 mut:
