@@ -180,7 +180,13 @@ fn status_bar_view(window &gui.Window) gui.View {
 
 fn add_torrent_file(path string, mut w gui.Window) {
 	dbg('add_torrent_file: ${path}')
-	meta := parse_torrent_file(path) or {
+	torrent_data := os.read_bytes(path) or {
+		dbg('ERROR reading torrent file: ${err.msg()}')
+		mut app := w.state[App]()
+		app.status_message = 'Error: ${err.msg()}'
+		return
+	}
+	meta := parse_torrent_data(torrent_data) or {
 		dbg('ERROR parsing torrent: ${err.msg()}')
 		mut app := w.state[App]()
 		app.status_message = 'Error: ${err.msg()}'
@@ -188,6 +194,15 @@ fn add_torrent_file(path string, mut w gui.Window) {
 	}
 
 	mut app := w.state[App]()
+
+	// Dedup check: skip if already loaded (by info_hash)
+	for t in app.torrents {
+		if t.meta.info_hash == meta.info_hash {
+			app.status_message = 'Already added: ${meta.name}'
+			return
+		}
+	}
+
 	download_dir := app.download_dir
 
 	// Initialize pieces
@@ -208,6 +223,9 @@ fn add_torrent_file(path string, mut w gui.Window) {
 	app.torrents << torrent
 	app.status_message = 'Added: ${meta.name}'
 
+	// Save to DB
+	db_save_torrent(torrent, torrent_data)
+
 	// Start download in background
 	tidx := app.torrents.len - 1
 	spawn start_download(tidx, mut w)
@@ -220,9 +238,11 @@ fn toggle_selected(mut w gui.Window) {
 			match app.torrents[idx].state {
 				.downloading {
 					app.torrents[idx].state = .paused
+					db_update_state(app.torrents[idx].meta.info_hash, .paused)
 				}
 				.paused {
 					app.torrents[idx].state = .downloading
+					db_update_state(app.torrents[idx].meta.info_hash, .downloading)
 					tidx := idx
 					spawn start_download(tidx, mut w)
 				}
@@ -249,6 +269,7 @@ fn remove_selected(mut w gui.Window) {
 	indices.sort(a > b)
 	for idx in indices {
 		if idx < app.torrents.len {
+			db_remove_torrent(app.torrents[idx].meta.info_hash)
 			app.torrents[idx].state = .paused // stop downloads
 			app.torrents.delete(idx)
 		}

@@ -1,7 +1,11 @@
 module main
 
+import os
+
 fn dbg(msg string) {
-	eprint('[qpt] ${msg}\n')
+	if os.getenv('QPT_VERBOSE') == '1' {
+		eprint('[qpt] ${msg}\n')
+	}
 }
 
 fn hex_str(data []u8) string {

@@ -402,6 +402,7 @@ fn handle_block(torrent_index int, piece_idx int, block_offset int, data []u8, m
 					torrent.state = .seeding
 					a.status_message = '${torrent.meta.name} - Download complete!'
 					dbg('  DOWNLOAD COMPLETE: ${torrent.meta.name}')
+					db_update_state(torrent.meta.info_hash, .seeding)
 				}
 			} else {
 				dbg('  Piece ${piece_idx} FAILED verification, re-downloading')

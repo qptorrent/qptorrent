@@ -5,11 +5,13 @@ import os
 import time
 
 fn main() {
-	// Check for .torrent files on command line → CLI mode
+	// Parse CLI arguments
 	mut torrent_paths := []string{}
 	for i in 1 .. os.args.len {
 		arg := os.args[i]
-		if arg.ends_with('.torrent') {
+		if arg == '-v' || arg == '--verbose' {
+			os.setenv('QPT_VERBOSE', '1', true)
+		} else if arg.ends_with('.torrent') {
 			if os.exists(arg) {
 				torrent_paths << os.real_path(arg)
 			} else {
@@ -48,6 +50,18 @@ fn on_init(mut w gui.Window) {
 	// Ensure download directory exists
 	if !os.exists(app.download_dir) {
 		os.mkdir_all(app.download_dir) or {}
+	}
+
+	// Restore torrents from DB
+	restore_torrents(mut app)
+
+	// Auto-resume torrents that have partial progress but aren't seeding
+	for i, t in app.torrents {
+		if t.state == .paused && t.downloaded > 0 && t.downloaded < t.meta.total_length {
+			app.torrents[i].state = .downloading
+			tidx := i
+			spawn start_download(tidx, mut w)
+		}
 	}
 
 	// Load any torrents from CLI arguments
