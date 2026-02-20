@@ -164,16 +164,28 @@ fn torrent_table_view(mut window gui.Window) gui.View {
 		}
 	}
 
+	// Convert torrent indices (0-based) to table row indices (1-based, header=0)
+	mut table_selected := map[int]bool{}
+	for idx, _ in app.selected {
+		table_selected[idx + 1] = true
+	}
+
 	return window.table(
 		id:              'torrents'
 		id_scroll:       1
 		sizing:          gui.fill_fill
 		text_style_head: gui.theme().b3
 		border_style:    .horizontal
-		selected:        app.selected
+		selected:        table_selected
 		on_select:       fn (selected map[int]bool, _ int, mut _ gui.Event, mut w gui.Window) {
 			mut a := w.state[App]()
-			a.selected = selected.clone()
+			// Convert table row indices (1-based) to torrent indices (0-based)
+			a.selected = map[int]bool{}
+			for idx, _ in selected {
+				if idx > 0 {
+					a.selected[idx - 1] = true
+				}
+			}
 			w.update_view(main_view)
 		}
 		data:            rows
