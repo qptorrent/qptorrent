@@ -1,6 +1,6 @@
 # qpTorrent
 
-A BitTorrent client written in [V](https://vlang.io) with a native GUI built on [vlang/gui](https://github.com/nickelca/gui).
+A BitTorrent client written in [V](https://vlang.io) with a native GUI built on [vlang/gui](https://github.com/vlang/gui).
 
 ![CI](https://github.com/qptorrent/qptorrent/actions/workflows/ci.yml/badge.svg)
 
@@ -58,7 +58,7 @@ v -prod .
 
 ### System dependencies
 
-The GUI depends on [vglyph](https://github.com/nickelca/vglyph) for text rendering, which needs native libraries:
+The GUI depends on [vglyph](https://github.com/vlang/vglyph) for text rendering, which needs native libraries:
 
 **macOS**
 ```
