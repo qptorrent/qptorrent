@@ -32,10 +32,14 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libgl1-mesa-dev libx11-dev libxcursor-dev libxrandr-dev libxinerama-dev libxi-dev
+          sudo apt-get install -y libgl1-mesa-dev libx11-dev libxcursor-dev libxrandr-dev libxinerama-dev libxi-dev libfreetype-dev libharfbuzz-dev libfribidi-dev libfontconfig-dev libpango1.0-dev libglib2.0-dev
+
+      - name: Install system dependencies (macOS)
+        if: runner.os == 'macOS'
+        run: brew install freetype harfbuzz fribidi fontconfig pango glib
 
       - name: Install V dependencies
-        run: v install
+        run: v install gui
 
       - name: Build (Unix)
         if: runner.os != 'Windows'
