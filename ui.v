@@ -3,6 +3,30 @@ module main
 import gui
 import os
 
+const table_col_name_width_anchor = 'WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW'
+const table_col_size_width_anchor = '9999.99 GB'
+const table_col_progress_width_anchor = '100.0%'
+const table_col_speed_width_anchor = '9999.99 GB/s'
+const table_col_eta_width_anchor = '999d 23h'
+const table_col_peers_width_anchor = '99999'
+const table_col_seeds_width_anchor = '99999'
+const table_col_status_width_anchor = 'Downloading Paused'
+
+fn fixed_th(label string, width_anchor string) gui.TableCellCfg {
+	return gui.TableCellCfg{
+		value:     width_anchor
+		head_cell: true
+		content:   gui.text(text: label, text_style: gui.theme().b3, clip: true)
+	}
+}
+
+fn fixed_td(value string, width_anchor string) gui.TableCellCfg {
+	return gui.TableCellCfg{
+		value:   width_anchor
+		content: gui.text(text: value, clip: true)
+	}
+}
+
 fn main_view(mut window gui.Window) gui.View {
 	app := window.state[App]()
 	if app.show_settings {
@@ -103,14 +127,14 @@ fn torrent_table_view(mut window gui.Window) gui.View {
 
 	mut rows := []gui.TableRowCfg{}
 	rows << gui.tr([
-		gui.th('Name'),
-		gui.th('Size'),
-		gui.th('Progress'),
-		gui.th('Down Speed'),
-		gui.th('ETA'),
-		gui.th('Peers'),
-		gui.th('Seeds'),
-		gui.th('Status'),
+		fixed_th('Name', table_col_name_width_anchor),
+		fixed_th('Size', table_col_size_width_anchor),
+		fixed_th('Progress', table_col_progress_width_anchor),
+		fixed_th('Down Speed', table_col_speed_width_anchor),
+		fixed_th('ETA', table_col_eta_width_anchor),
+		fixed_th('Peers', table_col_peers_width_anchor),
+		fixed_th('Seeds', table_col_seeds_width_anchor),
+		fixed_th('Status', table_col_status_width_anchor),
 	])
 
 	for i, t in app.torrents {
@@ -145,9 +169,10 @@ fn torrent_table_view(mut window gui.Window) gui.View {
 				}
 			}
 			cells: [
-				gui.td(t.meta.name),
-				gui.td(size_str),
+				fixed_td(t.meta.name, table_col_name_width_anchor),
+				fixed_td(size_str, table_col_size_width_anchor),
 				gui.TableCellCfg{
+					value: table_col_progress_width_anchor
 					content: gui.progress_bar(
 						height:  16
 						sizing:  gui.fill_fixed
@@ -155,11 +180,11 @@ fn torrent_table_view(mut window gui.Window) gui.View {
 						text:    progress_pct
 					)
 				},
-				gui.td(speed_str),
-				gui.td(eta_str),
-				gui.td(peers_str),
-				gui.td('${t.connected_seeds()}'),
-				gui.td(status_str),
+				fixed_td(speed_str, table_col_speed_width_anchor),
+				fixed_td(eta_str, table_col_eta_width_anchor),
+				fixed_td(peers_str, table_col_peers_width_anchor),
+				fixed_td('${t.connected_seeds()}', table_col_seeds_width_anchor),
+				fixed_td(status_str, table_col_status_width_anchor),
 			]
 		}
 	}
