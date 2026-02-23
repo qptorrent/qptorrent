@@ -4,7 +4,7 @@ A BitTorrent client written in [V](https://vlang.io) with a native GUI built on 
 
 ![CI](https://github.com/qptorrent/qptorrent/actions/workflows/ci.yml/badge.svg)
 
-<img width="1952" height="1306" alt="image" src="https://github.com/user-attachments/assets/667dc127-64f6-4516-98d8-1cc649166032" />
+<img width="1112" height="744" alt="image" src="https://github.com/user-attachments/assets/c9b12151-e1a7-485e-a811-11ed71753f87" />
 
 
 ## Features
