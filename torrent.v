@@ -51,7 +51,11 @@ fn parse_torrent_data(data []u8) !TorrentMetainfo {
 	}
 	dbg('  Info dict keys: ${info.keys()}')
 
-	name := if 'name' in info { bval_str(info['name'] or { BencodeValue([]u8{}) }) } else { 'unknown' }
+	name := if 'name' in info {
+		bval_str(info['name'] or { BencodeValue([]u8{}) })
+	} else {
+		'unknown'
+	}
 	piece_length := if 'piece length' in info {
 		int(bval_int(info['piece length'] or { BencodeValue(i64(0)) }))
 	} else {

@@ -5,16 +5,16 @@ import os
 
 @[table: 'torrents']
 struct TorrentRow {
-	id            int    @[primary; sql: serial]
+	id            int @[primary; sql: serial]
 	info_hash_hex string
 	torrent_hex   string // raw .torrent bytes as hex
 	download_dir  string
-	state         int    // TorrentState as int
+	state         int // TorrentState as int
 }
 
 @[table: 'settings']
 struct SettingsRow {
-	id             int    @[primary; sql: serial]
+	id             int @[primary; sql: serial]
 	download_dir   string
 	dark_mode      int
 	sequential     int
@@ -62,9 +62,7 @@ fn db_save_torrent(torrent &Torrent, torrent_data []u8) {
 	}
 	sql db {
 		insert row into TorrentRow
-	} or {
-		dbg('db_save_torrent: insert failed: ${err.msg()}')
-	}
+	} or { dbg('db_save_torrent: insert failed: ${err.msg()}') }
 }
 
 fn db_update_state(info_hash []u8, state TorrentState) {
@@ -79,9 +77,7 @@ fn db_update_state(info_hash []u8, state TorrentState) {
 	s := int(state)
 	sql db {
 		update TorrentRow set state = s where info_hash_hex == ih
-	} or {
-		dbg('db_update_state: update failed: ${err.msg()}')
-	}
+	} or { dbg('db_update_state: update failed: ${err.msg()}') }
 }
 
 fn db_remove_torrent(info_hash []u8) {
@@ -95,9 +91,7 @@ fn db_remove_torrent(info_hash []u8) {
 	ih := hex_str(info_hash)
 	sql db {
 		delete from TorrentRow where info_hash_hex == ih
-	} or {
-		dbg('db_remove_torrent: delete failed: ${err.msg()}')
-	}
+	} or { dbg('db_remove_torrent: delete failed: ${err.msg()}') }
 }
 
 fn db_load_all() ![]TorrentRow {
@@ -239,7 +233,5 @@ fn db_save_settings(app &App) {
 	}
 	sql db {
 		insert row into SettingsRow
-	} or {
-		dbg('db_save_settings: insert failed: ${err.msg()}')
-	}
+	} or { dbg('db_save_settings: insert failed: ${err.msg()}') }
 }

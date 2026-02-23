@@ -111,7 +111,8 @@ fn parse_tracker_response(data []u8) !TrackerResponse {
 				dbg('  Compact peers blob: ${peer_data.len} bytes')
 				if peer_data.len % 6 == 0 {
 					for i := 0; i < peer_data.len; i += 6 {
-						ip := '${peer_data[i]}.${peer_data[i + 1]}.${peer_data[i + 2]}.${peer_data[i + 3]}'
+						ip := '${peer_data[i]}.${peer_data[i + 1]}.${peer_data[i + 2]}.${peer_data[
+							i + 3]}'
 						port := u32(peer_data[i + 4]) << 8 | u32(peer_data[i + 5])
 						peers << '${ip}:${port}'
 					}

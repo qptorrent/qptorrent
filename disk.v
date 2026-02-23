@@ -105,9 +105,7 @@ fn read_piece(meta &TorrentMetainfo, download_dir string, piece_index int) ![]u8
 		})
 
 		file_path := os.join_path(download_dir, f.path)
-		mut fh := os.open(file_path) or {
-			return error('failed to open ${file_path}: ${err}')
-		}
+		mut fh := os.open(file_path) or { return error('failed to open ${file_path}: ${err}') }
 		fh.seek(i64(file_offset), .start) or {
 			fh.close()
 			return error('failed to seek in ${file_path}: ${err}')

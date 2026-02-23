@@ -86,7 +86,7 @@ fn on_init(mut w gui.Window) {
 	w.update_view(main_view)
 }
 
-fn speed_timer_loop(mut w &gui.Window) {
+fn speed_timer_loop(mut w gui.Window) {
 	for {
 		time.sleep(1 * time.second)
 		w.queue_command(fn (mut w gui.Window) {

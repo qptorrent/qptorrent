@@ -75,12 +75,10 @@ fn toolbar_view(window &gui.Window) gui.View {
 						title:          'Select Torrent File'
 						start_dir:      os.home_dir()
 						allow_multiple: true
-						filters:        [
-							gui.NativeFileFilter{
-								name:       'Torrent Files'
-								extensions: ['torrent']
-							},
-						]
+						filters:        [gui.NativeFileFilter{
+							name:       'Torrent Files'
+							extensions: ['torrent']
+						}]
 						on_done:        fn (result gui.NativeDialogResult, mut w gui.Window) {
 							if result.status == .ok {
 								for path in result.paths {
@@ -92,9 +90,9 @@ fn toolbar_view(window &gui.Window) gui.View {
 				}
 			),
 			gui.button(
-				content:  [
-					gui.text(text: if is_paused { 'Resume' } else { 'Pause' }),
-				]
+				content:  [gui.text(
+					text: if is_paused { 'Resume' } else { 'Pause' }
+				)]
 				disabled: !has_selection
 				on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
 					toggle_selected(mut w)
@@ -154,8 +152,7 @@ fn torrent_table_view(mut window gui.Window) gui.View {
 		rows << gui.TableRowCfg{
 			on_click: fn [row_idx] (_ &gui.Layout, mut e gui.Event, mut w gui.Window) {
 				mut a := w.state[App]()
-				if a.last_click_row == row_idx
-					&& a.last_click_frame > 0
+				if a.last_click_row == row_idx && a.last_click_frame > 0
 					&& e.frame_count - a.last_click_frame <= 24 {
 					// Double click - open in file manager
 					if row_idx < a.torrents.len {
@@ -168,11 +165,11 @@ fn torrent_table_view(mut window gui.Window) gui.View {
 					a.last_click_frame = e.frame_count
 				}
 			}
-			cells: [
+			cells:    [
 				fixed_td(t.meta.name, table_col_name_width_anchor),
 				fixed_td(size_str, table_col_size_width_anchor),
 				gui.TableCellCfg{
-					value: table_col_progress_width_anchor
+					value:   table_col_progress_width_anchor
 					content: gui.progress_bar(
 						height:  16
 						sizing:  gui.fill_fixed
@@ -280,17 +277,16 @@ fn settings_view(mut window gui.Window) gui.View {
 					gui.column(
 						sizing:  gui.fill_fit
 						spacing: 6
-						content: [
-							gui.text(text: 'Download Directory', text_style: gui.theme().b3),
+						content: [gui.text(text: 'Download Directory', text_style: gui.theme().b3),
 							gui.row(
 								sizing:  gui.fill_fit
 								spacing: 8
 								content: [
 									gui.input(
-										id:       'settings_download_dir'
-										id_focus: 10
-										text:     app.download_dir
-										sizing:   gui.fill_fit
+										id:             'settings_download_dir'
+										id_focus:       10
+										text:           app.download_dir
+										sizing:         gui.fill_fit
 										on_text_commit: fn (_ &gui.Layout, s string, _ gui.InputCommitReason, mut w gui.Window) {
 											mut a := w.state[App]()
 											a.download_dir = s
@@ -314,8 +310,7 @@ fn settings_view(mut window gui.Window) gui.View {
 										}
 									),
 								]
-							),
-						]
+							)]
 					),
 					// Dark mode
 					gui.row(
@@ -363,21 +358,24 @@ fn settings_view(mut window gui.Window) gui.View {
 						sizing:  gui.fill_fit
 						spacing: 6
 						content: [
-							gui.text(text: 'Download Speed Limit (KB/s, 0 = unlimited)', text_style: gui.theme().b3),
+							gui.text(
+								text:       'Download Speed Limit (KB/s, 0 = unlimited)'
+								text_style: gui.theme().b3
+							),
 							gui.numeric_input(
-								id:       'settings_speed_limit'
-								id_focus: 13
-								value:    f64(app.speed_limit_kb)
-								min:      0
-								max:      1000000
-								step_cfg: gui.NumericStepCfg{
+								id:              'settings_speed_limit'
+								id_focus:        13
+								value:           f64(app.speed_limit_kb)
+								min:             0
+								max:             1000000
+								step_cfg:        gui.NumericStepCfg{
 									step:         100
 									mouse_wheel:  true
 									keyboard:     true
 									show_buttons: true
 								}
-								decimals: 0
-								sizing:   gui.fill_fit
+								decimals:        0
+								sizing:          gui.fill_fit
 								on_value_commit: fn (_ &gui.Layout, val ?f64, _ string, mut w gui.Window) {
 									mut a := w.state[App]()
 									a.speed_limit_kb = int(val or { 0.0 })

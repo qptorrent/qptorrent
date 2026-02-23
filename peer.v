@@ -22,7 +22,7 @@ struct PendingRequest {
 	length int
 }
 
-fn start_download(torrent_index int, mut window &gui.Window) {
+fn start_download(torrent_index int, mut window gui.Window) {
 	app := window.state[App]()
 	if torrent_index >= app.torrents.len {
 		dbg('start_download: invalid torrent_index ${torrent_index}')
@@ -85,7 +85,7 @@ fn start_download(torrent_index int, mut window &gui.Window) {
 	dbg('  Spawned ${connected} peer connections')
 }
 
-fn peer_connection(torrent_index int, addr string, mut window &gui.Window) {
+fn peer_connection(torrent_index int, addr string, mut window gui.Window) {
 	// Register peer
 	window.queue_command(fn [torrent_index, addr] (mut w gui.Window) {
 		mut a := w.state[App]()
@@ -222,12 +222,13 @@ fn peer_connection(torrent_index int, addr string, mut window &gui.Window) {
 					// Remove from pending
 					pending = pending.filter(!(it.piece == piece_idx && it.offset == block_off))
 
-					handle_block(torrent_index, piece_idx, block_off, block_data, mut window)
+					handle_block(torrent_index, piece_idx, block_off, block_data, mut
+						window)
 
 					// Fill pipeline with more requests
 					if !choked {
-						fill_requests(torrent_index, addr, mut conn, peer_bitfield, mut pending, mut
-							window)
+						fill_requests(torrent_index, addr, mut conn, peer_bitfield, mut
+							pending, mut window)
 					}
 				}
 			}
@@ -245,7 +246,7 @@ fn peer_connection(torrent_index int, addr string, mut window &gui.Window) {
 
 // Fill the request pipeline up to max_pipeline, using local tracking to avoid
 // re-requesting the same blocks and to avoid reading stale shared state.
-fn fill_requests(torrent_index int, addr string, mut conn net.TcpConn, peer_bitfield []bool, mut pending []PendingRequest, mut window &gui.Window) {
+fn fill_requests(torrent_index int, addr string, mut conn net.TcpConn, peer_bitfield []bool, mut pending []PendingRequest, mut window gui.Window) {
 	app := window.state[App]()
 	if torrent_index >= app.torrents.len {
 		return
@@ -346,7 +347,7 @@ fn find_next_block(torrent &Torrent, peer_bitfield []bool, pending []PendingRequ
 	return -1, 0, 0
 }
 
-fn handle_block(torrent_index int, piece_idx int, block_offset int, data []u8, mut window &gui.Window) {
+fn handle_block(torrent_index int, piece_idx int, block_offset int, data []u8, mut window gui.Window) {
 	block_idx := block_offset / block_size
 	data_clone := data.clone()
 
@@ -366,7 +367,8 @@ fn handle_block(torrent_index int, piece_idx int, block_offset int, data []u8, m
 		}
 
 		// Skip if block already received (duplicate from another peer)
-		if block_idx < torrent.pieces[piece_idx].blocks.len && torrent.pieces[piece_idx].blocks[block_idx] {
+		if block_idx < torrent.pieces[piece_idx].blocks.len
+			&& torrent.pieces[piece_idx].blocks[block_idx] {
 			return
 		}
 
@@ -510,7 +512,7 @@ fn parse_bitfield(data []u8, num_pieces int) []bool {
 	return result
 }
 
-fn remove_peer(torrent_index int, addr string, mut window &gui.Window) {
+fn remove_peer(torrent_index int, addr string, mut window gui.Window) {
 	window.queue_command(fn [torrent_index, addr] (mut w gui.Window) {
 		mut a := w.state[App]()
 		if torrent_index < a.torrents.len {
