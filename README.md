@@ -2,7 +2,7 @@
 
 A BitTorrent client written in [V](https://vlang.io) with a native GUI built on [vlang/gui](https://github.com/nickelca/gui).
 
-![CI](https://github.com/nickelca/qptorrent/actions/workflows/ci.yml/badge.svg)
+![CI](https://github.com/qptorrent/qptorrent/actions/workflows/ci.yml/badge.svg)
 
 <img width="1952" height="1306" alt="image" src="https://github.com/user-attachments/assets/667dc127-64f6-4516-98d8-1cc649166032" />
 
