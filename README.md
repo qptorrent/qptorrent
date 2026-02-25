@@ -77,7 +77,7 @@ vcpkg install pango freetype
 
 ## Architecture
 
-The project is ~1k lines of V across 12 source files, all in `module main`.
+The project is ~2500 lines of V across 12 source files, all in `module main`.
 
 ```
 main.v      Entry point, window setup, event loop, speed timer
